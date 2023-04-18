@@ -1,0 +1,2 @@
+helm install -f thanos_values.yaml thanos my-repo/thanos --version v12.0.0
+helm install prometheus -f prom_valuse.yaml prometheus-community/kube-prometheus-stack --version v44.4.0

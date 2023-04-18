@@ -1,0 +1,28 @@
+{{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
+{{- if and .Values.defaultRules.create .Values.defaultRules.rules.team }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "app-probe" | trunc 63 | trimSuffix "-" }}
+  namespace: {{ template "kube-prometheus-stack.namespace" . }}
+  labels:
+    app: {{ template "kube-prometheus-stack.name" . }}
+{{ include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- if .Values.defaultRules.labels }}
+{{ toYaml .Values.defaultRules.labels | indent 4 }}
+{{- end }}
+{{- if .Values.defaultRules.annotations }}
+  annotations:
+{{ toYaml .Values.defaultRules.annotations | indent 4 }}
+{{- end }}
+spec:
+  groups:
+  - name: probe-rules
+    rules:
+    - expr: |
+        increase(prober_probe_total{probe_type='Liveness', result='failed'}[30s]) >= 1
+      for: 1m
+    - expr: | 
+        increase(prober_probe_total{probe_type='Readiness', result='failed'}[30s]) >= 1
+      for: 1m
+{{- end }}
